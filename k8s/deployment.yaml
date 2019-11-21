@@ -1,0 +1,129 @@
+apiVersion: v1
+items:
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    labels:
+      app: inventory
+      chart: inventory-0.6.0
+      heritage: Tiller
+      release: bluecompute
+      tier: backend
+      version: v1
+    name: inventory
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: inventory
+        chart: inventory-0.6.0
+        heritage: Tiller
+        release: bluecompute
+        tier: backend
+        version: v1
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: inventory
+          chart: inventory-0.6.0
+          heritage: Tiller
+          release: bluecompute
+          tier: backend
+          version: v1
+      spec:
+        containers:
+        - env:
+          - name: SERVICE_PORT
+            value: "8080"
+          - name: JAVA_TMP_DIR
+            value: /spring-tmp
+          - name: MYSQL_HOST
+            value: inventory-mysql
+          - name: MYSQL_PORT
+            value: "3306"
+          - name: MYSQL_DATABASE
+            value: inventorydb
+          - name: MYSQL_USER
+            value: dbuser
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: mysql-password
+                name: inventory-mysql-secret
+          image: ibmcase/bluecompute-inventory:0.6.0
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /health
+              port: 8090
+              scheme: HTTP
+            initialDelaySeconds: 35
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: inventory
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /health
+              port: 8090
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 2000
+          volumeMounts:
+          - mountPath: /spring-tmp
+            name: spring-tmp
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - /bin/bash
+          - -c
+          - until mysql -h ${MYSQL_HOST} -P ${MYSQL_PORT} -u${MYSQL_USER} -p${MYSQL_PASSWORD}
+            -e status; do echo waiting for mysql; sleep 1; done
+          env:
+          - name: MYSQL_HOST
+            value: inventory-mysql
+          - name: MYSQL_PORT
+            value: "3306"
+          - name: MYSQL_DATABASE
+            value: inventorydb
+          - name: MYSQL_USER
+            value: dbuser
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: mysql-password
+                name: inventory-mysql-secret
+          image: mysql:5.7.14
+          imagePullPolicy: IfNotPresent
+          name: test-mysql
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 2000
+        volumes:
+        - emptyDir:
+            medium: Memory
+          name: spring-tmp
+ 
