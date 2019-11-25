@@ -50,7 +50,7 @@ spec:
             secretKeyRef:
               key: mysql-password
               name: inventory-mysql-secret
-        image: ibmcase/bluecompute-inventory:0.6.0
+        image: __IMAGE__
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 6
