@@ -53,6 +53,8 @@ dependencies {
     compile("com.squareup.okhttp3:okhttp:3.5.0")
     compile("org.json:json:20160212")
     compile("org.yaml:snakeyaml:1.8")
+    compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.6.1'
+    compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.6.1'
 
     testCompile('junit:junit:[4,)')
 }
